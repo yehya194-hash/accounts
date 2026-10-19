@@ -39,10 +39,20 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
 .ok{color:var(--ac);font-weight:700}.no{color:var(--rd);font-weight:700}.w{color:var(--wn);font-weight:700}
 .n{color:var(--mu);font-size:12px;margin:6px 0 0}
 @media print{header input,nav,form,button.x{display:none}body{background:#fff}}
+body.out header,body.out nav,body.out main{display:none}
+#lg{position:fixed;inset:0;background:var(--bg);display:none;align-items:center;justify-content:center;padding:16px;z-index:10}
+#lg .box{width:100%;max-width:340px;padding:20px}
+#lg h1{margin:0 0 12px;font-size:20px}
+#lg form{flex-direction:column;align-items:stretch}
+#lgm{color:var(--rd);font-size:13px;min-height:20px}
 </style>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 </head>
-<body>
-<header><h1>نظام إدارة الشركة</h1><div style="display:flex;gap:8px;align-items:end;flex-wrap:wrap"><label style="color:inherit">الشهر<input type="month" id="mo"></label><button class="b" onclick="expD()">تصدير البيانات</button><button class="b" onclick="$('impf').click()">استيراد البيانات</button><input type="file" id="impf" accept=".json" style="display:none" onchange="impD(this)"></div></header>
+<body class="out">
+<div id="lg"><div class="box"><h1>نظام إدارة الشركة</h1><form onsubmit="return login()"><label>البريد الإلكتروني<input id="lem" type="email" required autocomplete="username"></label><label>كلمة السر<input id="lpw" type="password" required autocomplete="current-password"></label><div id="lgm"></div><button class="b">دخول</button></form></div></div>
+<header><h1>نظام إدارة الشركة</h1><div style="display:flex;gap:8px;align-items:end;flex-wrap:wrap"><label style="color:inherit">الشهر<input type="month" id="mo"></label><button class="b" onclick="expD()">تصدير البيانات</button><button class="b" onclick="$('impf').click()">استيراد البيانات</button><button class="b" style="background:var(--rd)" onclick="logout()">خروج</button><input type="file" id="impf" accept=".json" style="display:none" onchange="impD(this)"></div></header>
 <nav id="nav"></nav>
 <main id="app"></main>
 <script>
@@ -52,10 +62,21 @@ function seed(){var e=[],i;for(i=1;i<=4;i++)e.push({id:'s'+i,n:'مبيعات '+i
 for(i=1;i<=5;i++)e.push({id:'d'+i,n:'مصمم '+i,r:'جرافيك ديزاينر',sal:9000,tg:0,lv:21});
 e.push({id:'m1',n:'المونتير',r:'مونتير',sal:10000,tg:0,lv:21});
 return{emp:e,sales:[],att:[],lv:[],exp:[],wst:[],inc:[],set:{start:'09:30',com:2}}}
-var SEED={"emp":[{"id":"mvexm9rh0yy","n":"مريم ياسر ","r":"سيلز ","sal":7500,"tg":70000,"lv":21},{"id":"mvexq0ovyfa","n":"أية شوقى ","r":"سيلز ","sal":5500,"tg":50000,"lv":21},{"id":"mvexqohy98h","n":"مى سعد ","r":"سيلز ","sal":5500,"tg":35000,"lv":21},{"id":"mvextodi0cf","n":"ملك سمير ","r":"سيلز ","sal":2500,"tg":25000,"lv":21},{"id":"mvexvi07dy9","n":"أحمد حمدى ","r":"جرافيك ديزاينر ","sal":12000,"tg":0,"lv":21},{"id":"mvexwirib9k","n":"مهند محييي","r":"جرافيك ديزاينر ","sal":10000,"tg":0,"lv":21},{"id":"mvey4e79iin","n":"اسراء  السيد ","r":"جرافيك ديزاينر  ","sal":7000,"tg":0,"lv":21},{"id":"mvey50dza1n","n":"نرمين ماجد ","r":"جرافيك ديزاينر  ","sal":7200,"tg":0,"lv":21},{"id":"mveyaa6uvi9","n":"ايمان بركات  ","r":"جرافيك ديزاينر  ","sal":4000,"tg":0,"lv":21}],"sales":[{"id":"mveyc00gvvx","e":"mvexm9rh0yy","d":"2026-10-04","c":"ضياء ","a":1000,"m":"2026-10"},{"id":"mveyrfqavzf","e":"mvexm9rh0yy","d":"2026-10-05","c":"مصر الدولية ","a":5300,"m":"2026-10"},{"id":"mveys9qz8qz","e":"mvexm9rh0yy","d":"2026-10-05","c":"سمر كلينك9","a":14594,"m":"2026-10"},{"id":"mveyt1qw0cb","e":"mvexm9rh0yy","d":"2026-10-06","c":"ابراهيم شاهين ","a":1800,"m":"2026-10"},{"id":"mveytp5d4qc","e":"mvexm9rh0yy","d":"2026-10-07","c":"جايدلاين العمرى ","a":500,"m":"2026-10"},{"id":"mveyui3ale5","e":"mvexm9rh0yy","d":"2026-10-07","c":"امانى الحنفى ","a":5250,"m":"2026-10"},{"id":"mveyuy1esah","e":"mvexm9rh0yy","d":"2026-10-07","c":"شيماء السعودية  ","a":2759,"m":"2026-10"},{"id":"mveyve2864l","e":"mvexm9rh0yy","d":"2026-10-08","c":"احمد سامى ","a":1100,"m":"2026-10"},{"id":"mveyvwq2dyi","e":"mvexm9rh0yy","d":"2026-10-08","c":"محمد بنرات ","a":2070,"m":"2026-10"},{"id":"mveywa2mt64","e":"mvexm9rh0yy","d":"2026-10-08","c":"وليد برولاين ","a":400,"m":"2026-10"},{"id":"mveywx34ns0","e":"mvexm9rh0yy","d":"2026-10-09","c":"اشرف كارت ","a":150,"m":"2026-10"},{"id":"mveyxd58cto","e":"mvexm9rh0yy","d":"2026-10-10","c":"اعمار دجله ","a":750,"m":"2026-10"},{"id":"mveyzrufefu","e":"mvexm9rh0yy","d":"2026-10-11","c":"حسنى عسل مريم ","a":9450,"m":"2026-10"},{"id":"mvez08fvgsh","e":"mvexm9rh0yy","d":"2026-10-12","c":"مصطفى مرسال  ","a":5755,"m":"2026-10"},{"id":"mvez1s81usu","e":"mvexm9rh0yy","d":"2026-10-13","c":"ابراهيم ليتر هيد ","a":150,"m":"2026-10"},{"id":"mvez2d54k71","e":"mvexm9rh0yy","d":"2026-10-14","c":"2 كرتونة حلل ","a":1000,"m":"2026-10"},{"id":"mvez2z05787","e":"mvexm9rh0yy","d":"2026-10-17","c":"سويل ","a":5000,"m":"2026-10"},{"id":"mvez3gse2te","e":"mvexm9rh0yy","d":"2026-10-17","c":"جايدلاين wvy ","a":600,"m":"2026-10"},{"id":"mvez43otkce","e":"mvexm9rh0yy","d":"2026-10-19","c":"محمود حشمت ","a":750,"m":"2026-10"}],"att":[{"id":"mvez8sctlpu","e":"mvexm9rh0yy","d":"2026-10-01","s":"حضور","i":"09:06","o":"17:41"},{"id":"mvezahv2783","e":"mvexq0ovyfa","d":"2026-10-01","s":"حضور","i":"09:53","o":"17:41"},{"id":"mvezcxb1lok","e":"mvexqohy98h","d":"2026-10-01","s":"حضور","i":"08:54","o":"17:44"},{"id":"mvezdzpagbg","e":"mvextodi0cf","d":"2026-10-01","s":"حضور","i":"09:25","o":"17:41"},{"id":"mvezeljx489","e":"mvexvi07dy9","d":"2026-10-01","s":"حضور","i":"09:23","o":"17:23"},{"id":"mvezf34dsjn","e":"mvexwirib9k","d":"2026-10-01","s":"حضور","i":"09:29","o":"17:35"},{"id":"mvezfuh1645","e":"mvey4e79iin","d":"2026-10-01","s":"حضور","i":"08:58","o":"15:50"}],"lv":[],"exp":[{"id":"mvezpwl3ayb","d":"2026-10-10","c":"أخرى","s":"مرتب مهدى ","a":2500},{"id":"mvezqp2m0l1","d":"2026-10-11","c":"أخرى","s":"طلبات للتلاجه ","a":1300},{"id":"mvezrkul3uq","d":"2026-10-12","c":"أخرى","s":"سلفة مهند ","a":2800},{"id":"mvezstbhn1w","d":"2026-10-18","c":"أخرى","s":"اكل يحيي ","a":2750},{"id":"mveztf3vqjd","d":"2026-10-19","c":"كهرباء وإنترنت","s":"نت ","a":2700}],"wst":[{"id":"mvezulkoojt","d":"2026-10-15","i":"كيبورد ","r":"أخرى","c":10000}],"inc":[{"id":"mvezvb4bhxp","d":"2026-10-01","c":"ضياء ","s":"لوجو ","a":1000}],"set":{"start":"09:00","com":1.5}};
-try{D=JSON.parse(localStorage.getItem(KEY))}catch(e){}
-if(!D||!D.emp)D=JSON.parse(JSON.stringify(SEED));
-function save(){try{localStorage.setItem(KEY,JSON.stringify(D))}catch(e){}}
+var CFG={apiKey:"AIzaSyBDM3twR2OPzTJaqpgaYioY6SB-vKQkiYw",authDomain:"company-system-96ce4.firebaseapp.com",projectId:"company-system-96ce4",storageBucket:"company-system-96ce4.firebasestorage.app",messagingSenderId:"235469422424",appId:"1:235469422424:web:509e72bc6d54e937826f2d"};
+var DOC,ready=false,unsub=null;
+function emptyD(){return{emp:[],sales:[],att:[],lv:[],exp:[],wst:[],inc:[],set:{start:'09:30',com:2}}}
+D=emptyD();
+function save(){if(!ready)return;try{DOC.set(JSON.parse(JSON.stringify(D))).catch(function(e){alert('تعذر الحفظ: '+e.message)})}catch(e){}}
+function login(){$('lgm').textContent='';firebase.auth().signInWithEmailAndPassword($('lem').value.trim(),$('lpw').value).catch(function(){$('lgm').textContent='البريد أو كلمة السر غير صحيحة'});return false}
+function logout(){firebase.auth().signOut()}
+function boot(){
+if(CFG.apiKey.indexOf('PASTE')==0){$('lg').style.display='flex';$('lgm').textContent='لم يتم ضبط إعدادات Firebase بعد.';return}
+if(typeof firebase==='undefined'){$('lg').style.display='flex';$('lgm').textContent='تعذر تحميل Firebase. افتح الصفحة من لينك GitHub وتأكد من الإنترنت.';return}
+firebase.initializeApp(CFG);DOC=firebase.firestore().doc('company/data');
+firebase.auth().onAuthStateChanged(function(u){
+if(u){document.body.className='';$('lg').style.display='none';
+unsub=DOC.onSnapshot(function(sn){if(sn.metadata.hasPendingWrites&&ready)return;D=(sn.exists&&sn.data().emp)?sn.data():emptyD();ready=true;go(tab)},function(e){alert('تعذر تحميل البيانات: '+e.message)})}
+else{ready=false;if(unsub)unsub();document.body.className='out';$('lg').style.display='flex'}})}
 function $(i){return document.getElementById(i)}
 function f(n){return Math.round(n).toLocaleString('en-US')}
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,5)}
@@ -101,7 +122,7 @@ function expD(){var b=new Blob([JSON.stringify(D)],{type:'application/json'}),a=
 function impD(inp){var fl=inp.files[0];if(!fl)return;var r=new FileReader();r.onload=function(){try{var x=JSON.parse(r.result);if(!x||!x.emp)throw 0;if(!confirm('سيتم استبدال البيانات الحالية بالبيانات من الملف. متابعة؟'))return;D=x;save();go(tab);alert('تم الاستيراد بنجاح')}catch(e){alert('الملف غير صالح')}};r.readAsText(fl);inp.value=''}
 function go(t){tab=t;$('nav').innerHTML=TABS.map(function(x){return'<button class="'+(x[0]==t?'on':'')+'" onclick="go(\''+x[0]+'\')">'+x[1]+'</button>'}).join('');$('app').innerHTML=V[t]()}
 $('mo').value=M;$('mo').onchange=function(){M=this.value||M;go(tab)};
-go('dash');
+boot();
 </script>
 </body>
 </html>
