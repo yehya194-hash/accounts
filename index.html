@@ -147,5 +147,83 @@ function go(t){tab=t;$('nav').innerHTML=TABS.map(function(x){return'<button clas
 $('mo').value=M;$('mo').onchange=function(){M=this.value||M;go(tab)};
 go('dash');
 </script>
+<div id="syncbar" style="position:fixed;bottom:0;left:0;right:0;z-index:50;display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;padding:6px 10px calc(6px + env(safe-area-inset-bottom,0px));background:var(--sf);border-top:1px solid var(--bd);font:600 12px Cairo,sans-serif;color:var(--tx)">
+<span id="syncst" style="color:var(--mu)">جاري الاتصال...</span>
+<button type="button" onclick="expJ()" style="font:inherit;padding:4px 10px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx);cursor:pointer">تصدير JSON</button>
+<button type="button" onclick="document.getElementById('impf').click()" style="font:inherit;padding:4px 10px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx);cursor:pointer">استيراد JSON</button>
+<input id="impf" type="file" accept=".json,application/json" style="display:none">
+</div>
+<div style="height:48px"></div>
+<script>
+function expJ(){var b=new Blob([JSON.stringify(D,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='erp-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click()}
+</script>
+<script type="module">
+import{initializeApp}from"https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import{getFirestore,doc,setDoc,onSnapshot}from"https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+/* ===== الصق هنا firebaseConfig من Project Settings ===== */
+const firebaseConfig={
+  apiKey:"AIzaSyBDM3twR2OPzTJaqpgaYioY6SB-vKQkiYw",
+  authDomain:"company-system-96ce4.firebaseapp.com",
+  projectId:"company-system-96ce4",
+  storageBucket:"company-system-96ce4.firebasestorage.app",
+  messagingSenderId:"235469422424",
+  appId:"1:235469422424:web:509e72bc6d54e937826f2d"
+};
+/* ======================================================== */
+
+const st=document.getElementById('syncst');
+function status(t,c){st.textContent=t;st.style.color=c||'var(--mu)'}
+function norm(d){['emp','inc','att','ab','exp','wst'].forEach(k=>{d[k]=d[k]||[]});d.set=d.set||{};d.set.hrs=d.set.hrs||8;d.set.ded=d.set.ded||0;return d}
+const localSave=window.save;
+
+if(firebaseConfig.apiKey==="PUT_API_KEY"){
+  status('الحفظ محلي فقط (لم يتم إدخال إعدادات Firebase)','var(--rd)');
+}else{
+  const db=getFirestore(initializeApp(firebaseConfig));
+  const ref=doc(db,'company','data');
+  let ready=false,timer=null,dirty=false;
+
+  function push(){
+    status('جاري الحفظ...');
+    setDoc(ref,JSON.parse(JSON.stringify(D))).then(()=>{dirty=false;status('✔ تم الحفظ على السيرفر','var(--ok)')})
+    .catch(e=>{console.error(e);status('✖ فشل الحفظ: '+(e.code||e.message),'var(--rd)')});
+  }
+  window.save=function(){localSave();if(!ready){dirty=true;return}clearTimeout(timer);timer=setTimeout(push,400)};
+
+  let first=true;
+  onSnapshot(ref,snap=>{
+    if(snap.metadata.hasPendingWrites)return;
+    if(!snap.exists()){
+      ready=true;status('لا توجد بيانات على السيرفر، جاري رفع البيانات الحالية...');push();return;
+    }
+    const cloud=norm(snap.data());
+    if(first){
+      first=false;
+      try{const loc=localStorage.getItem(KEY);if(loc&&loc!==JSON.stringify(cloud))localStorage.setItem(KEY+'_local_backup',loc)}catch(e){}
+    }
+    window.D=cloud;try{localStorage.setItem(KEY,JSON.stringify(cloud))}catch(e){}
+    ready=true;
+    const a=document.activeElement,editing=ED||(a&&/INPUT|SELECT|TEXTAREA/.test(a.tagName));
+    if(!editing)go(tab);
+    status('✔ متصل ومتزامن','var(--ok)');
+    if(dirty){dirty=false;push()}
+  },err=>{console.error(err);status('✖ خطأ اتصال: '+(err.code||err.message),'var(--rd)')});
+}
+
+document.getElementById('impf').onchange=function(){
+  const f=this.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      const o=JSON.parse(r.result);if(!o||!o.emp)throw 0;
+      if(!confirm('سيتم استبدال كل البيانات الحالية بالملف. متأكد؟'))return;
+      window.D=norm(o);window.save();go(tab);status('تم الاستيراد');
+    }catch(e){alert('ملف غير صالح')}
+  };
+  r.readAsText(f);this.value='';
+};
+</script>
+
 </body>
 </html>
